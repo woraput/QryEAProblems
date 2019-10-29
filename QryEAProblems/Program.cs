@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using MongoDB.Driver;
 using System.Linq;
 using QryEAProblems.Models;
@@ -99,6 +100,9 @@ namespace QryEAProblems
                         }
                         else
                         {
+                            var path = $@"QryEAProblems\listEAProblems.txt";
+                            using (var writer = new StreamWriter(path))
+                                writer.Write(listEAProblems);
                             Console.WriteLine("Done!");
 
                         }
