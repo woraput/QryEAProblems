@@ -4,6 +4,7 @@ using MongoDB.Driver;
 using System.Linq;
 using QryEAProblems.Models;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace QryEAProblems
 {
@@ -44,7 +45,7 @@ namespace QryEAProblems
             var eaCodeSwaps = ea1.Union(ea2).ToList();
             try
             {
-
+                //var fiMoneys = fiMoney.Find(it => it.EaCode == "11001021000008")
                 var fiMoneys = fiMoney.Find(it => !eaCodeSwaps.Contains(it.EaCode))
                     .Project(it => new
                     {
@@ -55,6 +56,7 @@ namespace QryEAProblems
                         ComunityComplete = it.ComunityComplete,
                     })
                     .ToList()
+                    .Take(20)
                     .GroupBy(it => it.EaCode,
                         (ea, items) => new
                         {
@@ -100,11 +102,12 @@ namespace QryEAProblems
                         }
                         else
                         {
-                            var path = $@"QryEAProblems\listEAProblems.txt";
+                            Console.WriteLine($"{count} / {all}");
+                            var path = $@"D:\work diamond\โครงการน้ำ\QryEAProblems\listEAProblems.txt";
+                            string json = JsonConvert.SerializeObject(listEAProblems);
                             using (var writer = new StreamWriter(path))
-                                writer.Write(listEAProblems);
+                                writer.WriteLine(json);
                             Console.WriteLine("Done!");
-
                         }
 
                     }
