@@ -56,7 +56,7 @@ namespace QryEAProblems
                         ComunityComplete = it.ComunityComplete,
                     })
                     .ToList()
-                    .Take(20)
+                    //.Take(50)
                     .GroupBy(it => it.EaCode,
                         (ea, items) => new
                         {
@@ -68,6 +68,11 @@ namespace QryEAProblems
 
                 var count = 0;
                 var all = fiMoneys.Count();
+                var path = $@"D:\work diamond\โครงการน้ำ\QryEAProblems\listEAProblems.txt";
+                var logFile = File.ReadAllText(path);
+                var deser = JsonConvert.DeserializeObject<List<string>>(logFile);
+                foreach (var s in deser) listEAProblems.Add(s);
+
                 foreach (var item in fiMoneys)
                 {
                     try
@@ -92,22 +97,28 @@ namespace QryEAProblems
 
                         if (!equal)
                         {
-                            listEAProblems.Add(ea);
+                            if (listEAProblems.Contains(ea))
+                            {
+                                count++;
+                                Console.WriteLine($"{count} / {all} Pass!");
+                                continue;
+                            }
+                            else
+                            {
+                                listEAProblems.Add(ea);
+                                string json = JsonConvert.SerializeObject(listEAProblems);
+                                using (var writer = new StreamWriter(path))
+                                    writer.WriteLine(json);
+                            }
                         }
                         count++;
                         if (count != all)
                         {
-                            Console.WriteLine($"{count} / {all}");
-
+                            Console.WriteLine($"{count} / {all} not Done!");
                         }
                         else
                         {
-                            Console.WriteLine($"{count} / {all}");
-                            var path = $@"D:\work diamond\โครงการน้ำ\QryEAProblems\listEAProblems.txt";
-                            string json = JsonConvert.SerializeObject(listEAProblems);
-                            using (var writer = new StreamWriter(path))
-                                writer.WriteLine(json);
-                            Console.WriteLine("Done!");
+                            Console.WriteLine($"{count} / {all} Done!");
                         }
 
                     }
@@ -116,63 +127,11 @@ namespace QryEAProblems
                         throw err;
                     }
                 }
-                //var fiMoneys = fiMoney.Find(it => it.EaCode == "11001081000001")
-                //    .Project(it => new
-                //    {
-                //        EaCode = it.EaCode,
-                //        //BuildingDoneAll = it.BuildingDoneAll,
-                //        //BuildingSad = it.BuildingSad,
-                //        //BuildingMicOff = it.BuildingMicOff,
-                //        //BuildingEyeOff = it.BuildingEyeOff,
-                //        //BuildingCheckMark = it.BuildingCheckMark,
-                //        //BuildingInformation = it.BuildingInformation,
-                //        //HouseholdComplete = it.HouseholdComplete,
-                //        //HouseholdMicOff = it.HouseholdMicOff,
-                //        //HouseholdEyeOff = it.HouseholdEyeOff,
-                //        //HouseholdPause = it.HouseholdPause,
-                //        //HouseholdRefresh = it.HouseholdRefresh,
-                //        //HouseholdSad = it.HouseholdSad
-                //        Building = it.BuildingDoneAll + it.BuildingSad + it.BuildingMicOff + it.BuildingEyeOff,
-                //        Unit = it.HouseholdComplete + it.HouseholdMicOff + it.HouseholdEyeOff + it.HouseholdPause + it.HouseholdRefresh + it.HouseholdSad,
-                //        ComunityComplete = it.ComunityComplete,
-                //    })
-                //    .ToListAsync()
-                //    .GetAwaiter()
-                //    .GetResult();
-
-
-                //var reports = reportEAInfo.Find(it => it.DateApprovePs != null || it.DateApproveFs != null)
-                //    .Project(it => it._id)
-                //    .ToListAsync()
-                //    .GetAwaiter()
-                //    .GetResult();
-
-                //var eaAppovedInSurveys = surveys.Where(it => it.EA == it.SrcEA).Select(it => it.EA).Distinct();
-                //var listEAProblems = new List<string>();
-
-
-                //foreach (var ea in eaAppovedInSurveys)
-                //{
-                //    var reportInfo = reports.Where(it => it._id == ea)
-                //    .Select(it => new
-                //    {
-                //        ProgressBuilding = it.ProgressBuilding,
-                //        ProgressUnit = it.ProgressUnit
-                //    });
-
-                //    var building = surveys.Where(it => it.EA == ea && it.SampleType == "b" && it.Enlisted == true).Count();
-                //    var unit = surveys.Where(it => it.EA == ea && it.SampleType == "u" && it.Enlisted == true).Count();
-                //    var dataEqual = reportInfo.FirstOrDefault().ProgressBuilding == building && reportInfo.FirstOrDefault().ProgressUnit == unit;
-                //    if (!dataEqual)
-                //    {
-                //        listEAProblems.Add(ea);
-                //    }
-                //}
-                //return listEAProblems;
             }
             catch (Exception err)
             {
                 throw err;
+
             }
         }
     }
