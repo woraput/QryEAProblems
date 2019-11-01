@@ -24,7 +24,9 @@ namespace QryEAProblems
             fiMoney = database.GetCollection<FiMoney>("fimoney");
             uploadLog = database.GetCollection<UploadLog>("uploadlog");
             swapSurveyEaLog = database.GetCollection<SwapSurveyEaLog>("SwapSurveyEaLog");
-            Process();
+            //Process();
+            //Process1();
+            Process2();
         }
 
         private static void Process()
@@ -133,6 +135,79 @@ namespace QryEAProblems
                 throw err;
 
             }
+        }
+
+        private static void Process1()
+        {
+            var listFIidOfEAProblems = new List<object>();
+            var pathListEa = $@"D:\work diamond\โครงการน้ำ\QryEAProblems\listEAProblems.txt";
+            var pathListUserID = $@"D:\work diamond\โครงการน้ำ\QryEAProblems\listUserID.txt";
+            var logFile = File.ReadAllText(pathListEa);
+            //var logFileID = File.ReadAllText(pathListUserID);
+            var deser = JsonConvert.DeserializeObject<List<string>>(logFile);
+            //var deser = JsonConvert.DeserializeObject<List<object>>(logFileID);
+            var fiMoneys = fiMoney.Find(it => true)
+               .Project(it => new
+               {
+                   EA = it.EaCode,
+                   IdUser = it.FiId,
+               })
+               .ToList();
+            var count = 0;
+            var all = deser.Count();
+
+            try
+            {
+                foreach (var s in deser)
+                {
+                    var userId = fiMoneys.Where(it => it.EA == s).ToList();
+                    foreach (var i in userId)
+                    {
+                        listFIidOfEAProblems.Add(new
+                        {
+                            EA = i.EA,
+                            User = i.IdUser,
+                        });
+                    }
+                    count++;
+                    if (count != all)
+                    {
+                        Console.WriteLine($"{count} / {all} not Done!");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"{count} / {all} Done!");
+                    }
+                }
+
+                string json = JsonConvert.SerializeObject(listFIidOfEAProblems);
+                using (var writer = new StreamWriter(pathListUserID))
+                    writer.WriteLine(json);
+            }
+            catch (Exception err)
+            {
+
+                throw err;
+            }
+
+        }
+        private static void Process2()
+        {
+            var pathListUserID = $@"D:\work diamond\โครงการน้ำ\QryEAProblems\listUserID.txt";
+            var pathListUserIDOnly = $@"D:\work diamond\โครงการน้ำ\QryEAProblems\listUserIDOnly.txt";
+            var logFileID = File.ReadAllText(pathListUserID);
+            var deser = JsonConvert.DeserializeObject<List<UserID>>(logFileID);
+            var user = deser.Select(it => it.User).Distinct().ToList();
+
+            string json = JsonConvert.SerializeObject(user);
+            using (var writer = new StreamWriter(pathListUserIDOnly))
+                writer.WriteLine(json);
+        }
+
+        private class UserID
+        {
+            public string EA { get; set; }
+            public string User { get; set; }
         }
     }
 }
