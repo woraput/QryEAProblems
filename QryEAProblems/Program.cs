@@ -36,7 +36,7 @@ namespace QryEAProblems
             var listEaAfterRun = new List<object>();
             var path = $@"D:\work diamond\โครงการน้ำ\QryEAProblems\listEAProblems.txt";
             var logFile = File.ReadAllText(path);
-            var deser = JsonConvert.DeserializeObject<List<string>>(logFile).Take(10);
+            var deser = JsonConvert.DeserializeObject<List<string>>(logFile);
             foreach (var s in deser) listEAProblems.Add(s);
 
             try
