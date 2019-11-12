@@ -26,9 +26,120 @@ namespace QryEAProblems
             swapSurveyEaLog = database.GetCollection<SwapSurveyEaLog>("SwapSurveyEaLog");
             //Process();
             //Process1();
-            Process2();
+            //Process2();
+            Process3();
         }
 
+        private static void Process3()
+        {
+            var listEAProblems = new List<string>();
+            var listEaAfterRun = new List<object>();
+            var path = $@"D:\work diamond\โครงการน้ำ\QryEAProblems\listEAProblems.txt";
+            var logFile = File.ReadAllText(path);
+            var deser = JsonConvert.DeserializeObject<List<string>>(logFile).Take(10);
+            foreach (var s in deser) listEAProblems.Add(s);
+
+            try
+            {
+                //var fiMoneys = fiMoney.Find(it => it.EaCode == "11001021000008")
+                var fiMoneys = fiMoney.Find(it => listEAProblems.Contains(it.EaCode))
+                    .Project(it => new
+                    {
+                        EaCode = it.EaCode,
+                        _id = it.FiId,
+                        Building = it.BuildingDoneAll + it.BuildingSad + it.BuildingMicOff + it.BuildingEyeOff,
+                        Unit = it.HouseholdComplete + it.HouseholdMicOff + it.HouseholdEyeOff + it.HouseholdPause + it.HouseholdRefresh + it.HouseholdSad,
+                        ComunityComplete = it.ComunityComplete,
+                    })
+                    .ToListAsync().GetAwaiter().GetResult()
+                    //.Take(50)
+                    .GroupBy(it => it.EaCode,
+                        (ea, items) => new
+                        {
+                            EaCode = ea,
+                            Building = items.Sum(it => it.Building),
+                            Unit = items.Sum(it => it.Unit),
+                            ComunityComplete = items.Sum(it => it.ComunityComplete)
+                        });
+                var eaFi = fiMoneys.Select(it => it.EaCode).ToList();
+                var surveys = surveyData.Find(it => eaFi.Contains(it.EA) && it.Enlisted == true)
+                  .Project(it => new
+                  {
+                      EA = it.EA,
+                      SampleType = it.SampleType,
+                      Status = it.Status,
+                      UserID = it.UserId
+                  })
+                  .ToListAsync()
+                  .GetAwaiter()
+                  .GetResult();
+
+                var count = 0;
+                var all = fiMoneys.Count();
+                var pathAfterRun = $@"D:\work diamond\โครงการน้ำ\QryEAProblems\findEAProblem2.txt";
+                //var logFileAfter = File.ReadAllText(pathAfterRun);
+                //var deserAfter = JsonConvert.DeserializeObject<List<string>>(logFileAfter);
+                //foreach (var s in deserAfter) listEaAfterRun.Add(s);
+                foreach (var item in fiMoneys)
+                {
+                    try
+                    {
+                        var survey = surveys?.Where(it => it.EA == item.EaCode).ToList();
+                        var building = survey?.Where(it => it.SampleType == "b").Count() ?? 0;
+                        var unit = survey?.Where(it => it.SampleType == "u").Count() ?? 0;
+                        var com = survey?.Where(it => it.SampleType == "c" && it.Status == "done-all").Count() ?? 0;
+                        var ea = item?.EaCode ?? null;
+                        var equal = item.Building.Equals(building)
+                                    && item.Unit.Equals(unit)
+                                   && item.ComunityComplete.Equals(com);
+                        var userId = survey.Select(it => it.UserID).Distinct().ToList();
+                        var isValid = false;
+                        if (!equal)
+                        {
+                            if (listEaAfterRun.Contains(ea) && isValid == true)
+                            {
+                                count++;
+                                Console.WriteLine($"{count} / {all} Pass!");
+                                continue;
+                            }
+                            else
+                            {
+                                foreach (var user in userId)
+                                {
+                                    listEaAfterRun.Add(new
+                                    {
+                                        EA = item.EaCode,
+                                        UserID = user,
+                                    });
+                                }
+                                string json = JsonConvert.SerializeObject(listEaAfterRun);
+                                using (var writer = new StreamWriter(pathAfterRun))
+                                    writer.WriteLine(json);
+                            }
+                        }
+                        count++;
+                        if (count != all)
+                        {
+                            Console.WriteLine($"{count} / {all} not Done!");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"{count} / {all} Done!");
+                        }
+
+                    }
+                    catch (Exception err)
+                    {
+                        throw err;
+                    }
+                }
+            }
+            catch (Exception err)
+            {
+                throw err;
+
+            }
+        }
         private static void Process()
         {
             var listEAProblems = new List<string>();
